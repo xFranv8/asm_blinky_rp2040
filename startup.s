@@ -16,51 +16,40 @@
 .type Reset_Handler, %function
 
 Reset_Handler:
-
-    /* --------------------------------
-     * Unreset IO_BANK0
-     * -------------------------------- */
-    LDR  r0, =0x4000C000      /* RESETS base */
-    LDR  r1, [r0]             /* RESETS_RESET */
-    MOVS r2, #0x20            /* (1 << 5) IO_BANK0 */
-    BICS r1, r2               /* clear bit 5 */
-    STR  r1, [r0]
+    LDR r0, =0x4000C000
+    LDR r1, [r0]
+    MOVS r2, #0x20
+    BICS r1, r2
+    STR r1, [r0]
 
 wait_reset_done:
-    LDR  r1, [r0, #8]         /* RESETS_RESET_DONE */
-    TST  r1, r2
-    BEQ  wait_reset_done
+    LDR r3, =0x4000c008
+    LDR r4, [r3]
+    TST r4, r2
+    BEQ wait_reset_done
 
-    /* --------------------------------
-     * Set GPIO15 function to SIO
-     * -------------------------------- */
-    LDR  r0, =0x4001407C      /* GPIO15_CTRL */
-    MOVS r1, #5               /* FUNCSEL = 5 (SIO) */
-    STR  r1, [r0]
+Funcsel:
+    LDR r3, =0x400140A4
+    MOVS r4, #5
+    STR r4, [r3]
 
-    /* --------------------------------
-     * Enable GPIO15 output
-     * -------------------------------- */
-    LDR  r0, =0xD0000020      /* SIO_GPIO_OE */
+enable_output:
+    LDR r3, =0xD0000020
     MOVS r1, #0x01
-    LSLS r1, r1, #15          /* r1 = (1 << 15) */
-    STR  r1, [r0]
+    LSLS r1, r1, #20
+    STR r1, [r3]
 
-/* ===============================
- * Blink loop
- * =============================== */
 loop:
-    /* Toggle GPIO15 */
-    LDR  r0, =0xD000001C      /* SIO_GPIO_OUT_XOR */
-    STR  r1, [r0]
+    LDR r3, =0xD000001C
+    STR r1, [r3]
 
-    /* Delay */
-    LDR  r2, =0x100000
+    LDR r2, =0x100000
+
 delay:
     SUBS r2, r2, #1
-    BNE  delay
+    BNE delay
 
-    B    loop
+    B loop
 
 .size Reset_Handler, . - Reset_Handler
 
